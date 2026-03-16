@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: funpilot-config
+  namespace: funpilot
+data:
+  log-level: "info"  # Options: debug, info, warn, error
+  default-agent-config: "public:config:default-funpilot-config"
+  grafana-url: "http://monitoring-grafana.monitoring.svc.cluster.local" # This should match the endpoint of the Grafana instance in your cluster
+  grafana-datasource-uid: "cfftxdzxifldsa" # This should match the UID of the Grafana datasource configured for FunPilot metrics (e.g., Prometheus or Thanos)
+  grafana-contact-point-name: "funpilot"
+  
+  # Notification Configuration
+  default-alert-repeat-interval-seconds: "120"
+  
+  # LLM Configuraiton for non-user-owned agents (e.g, SLO compile agent) and for agent configs that don't specify an LLM config (not enabled for now)
+  llm-base-url: "https://openrouter.ai/api/v1"
+  llm-model: "openai/gpt-oss-120b"
+  llm-temperature: "0.0"
+  
+  # Metrics Configuration
+  thanos-url: "http://thanos-query.monitoring.svc.cluster.local:9090" # This should match the endpoint of the Thanos Query instance in your cluster
+  # The query time window and step for metrics queries when unspecified in the request
+  metrics-time-window-seconds: "60"
+  metrics-step-seconds: "5"
+  # The URL and timeout for the Config API
+  config-api-url: "http://funpilot-config-api.funpilot.svc.cluster.local:8082"
+  config-api-timeout: "5s"
+  
+  # LLM Processor configuration of worker threads for processing agent call requests and the queue size for incoming LLM requests
+  llm-worker-count: "2"
+  llm-queue-size: "100"
+
+  # Agent trigger semantics configuration when unspecified in the agent config
+  # The cooldown period after an agent execution during which the same agent won't be triggered again even if the trigger condition is met.
+  agent-blackout-period-seconds: "90"
+  # The blackout period after a new revision is deployed during which the agent won't be triggered even if the trigger condition is met.
+  agent-cooldown-period-seconds: "120"
+  agent-execution-timeout-seconds: "120"
+  agent-max-iters: "3"
+  agent-request-timeout-seconds: "120"
+
+  # History storage settings when unspecified
+  alert-history-ttl-seconds: "604800"
+  alert-history-max-length: "100"
+
+  # Redis Configuration
+  redis-address: "funpilot-redis:6379"
+  redis-host: "funpilot-redis"
+  redis-port: "6379"
+  redis-db: "0"
+  redis-key-prefix: "funpilot"
