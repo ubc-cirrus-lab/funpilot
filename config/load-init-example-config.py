@@ -32,7 +32,7 @@ redis_client.ping()
 
 # Create Config
 redis_client.hset(f"{USER_ID}:config:{CONFIG_ID}", mapping={"created_at":time.time_ns(), "updated_at":time.time_ns()})
-redis_client.hset(f"{USER_ID}:config:{CONFIG_ID}", mapping={"workflow_name":"triage-propose-judge"})
+redis_client.hset(f"{USER_ID}:config:{CONFIG_ID}", mapping={"workflow_name":"triage-propose-judge"}) # the name of the agent to run when this config is used. Must match a workflow_definition name field.
 
 # Alert rule definitions
 ALERT_RULES = {
