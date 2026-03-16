@@ -1,0 +1,35 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: funpilot-enabled-app-1
+  labels:
+    funpilot.dev/enabled: 'true'
+  annotations:
+    funpilot.dev/config: public:config:default-funpilot-config
+spec:
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: NotIn
+                values:
+                - storage-node
+      containers:
+      - image: docker.io/changyuan/funpilot-example-workload:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 250m
+            memory: 250M
+    metadata:
+      annotations:
+        autoscaling.knative.dev/target: '100'
+        autoscaling.knative.dev/min-scale: '1'
+        autoscaling.knative.dev/max-scale: '40'
+      labels:
+        funpilot.dev/enabled: 'true'
