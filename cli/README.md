@@ -22,6 +22,7 @@ funpilot --help
 ## CLI Usage
 After installing the CLI, you can use it to interact with your FunPilot deployment.
 You can run `funpilot --help` to see the available commands and options. Each command also has its own help message that you can access with `funpilot <command>`.
+Also, we provide example custom handler and renderer implementations in the [`custom_handler_and_renderer`](../app/custom_handler_and_renderer/) directory, along with instructions on how to register them using the CLI.
 
 For example, you can use the following commands manage your applications and configurations:
 Login into the system:
@@ -65,3 +66,5 @@ Delete an application:
 ```bash
 funpilot app delete user-1-app-1
 ```
+
+The [`custom_handler_and_renderer`](../app/custom_handler_and_renderer/) directory contains example implementations of custom tool-call handlers and template placeholder renderers, along with instructions on how to register them using the FunPilot CLI.
