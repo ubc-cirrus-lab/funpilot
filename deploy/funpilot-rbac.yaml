@@ -1,0 +1,85 @@
+# ServiceAccount for FunPilot
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: funpilot-sa
+  namespace: funpilot
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: funpilot-ksvc-manager
+rules:
+  - apiGroups: ["serving.knative.dev"]
+    resources: ["services"]
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+
+  - apiGroups: ["serving.knative.dev"]
+    resources: ["revisions"]
+    verbs:
+      - get
+      - list
+      - watch
+
+  - apiGroups: ["serving.knative.dev"]
+    resources: ["revisions/status"]
+    verbs:
+      - get
+
+  - apiGroups: ["funpilot.dev"]
+    resources:
+      - "funpilotconfigs"
+      - "funpilotconfigs/status"
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+
+  - apiGroups: ["apps"]
+    resources:
+      - "deployments"
+    verbs:
+      - get
+      - list
+      - watch
+
+  - apiGroups: ["apps"]
+    resources:
+      - "deployments/status"
+    verbs:
+      - get
+
+  - apiGroups: [""]
+    resources:
+      - "configmaps"
+    verbs:
+      - get
+      - list
+      - watch
+    resourceNames:
+      - "funpilot-prompt"
+      - "funpilot-config"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: funpilot-ksvc-manager-binding
+subjects:
+  - kind: ServiceAccount
+    name: funpilot-sa
+    namespace: funpilot
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: funpilot-ksvc-manager
