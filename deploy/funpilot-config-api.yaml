@@ -1,0 +1,108 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funpilot-config-api
+  namespace: funpilot
+  labels:
+    app: funpilot-config-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: funpilot-config-api
+  template:
+    metadata:
+      labels:
+        app: funpilot-config-api
+    spec:
+      serviceAccountName: funpilot-sa
+
+      initContainers:
+        - name: wait-for-redis
+          image: redis:7.2.5
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - >-
+              until redis-cli -h funpilot-redis -p 6379 ping | grep -q PONG; do
+                echo "waiting for redis";
+                sleep 2;
+              done
+
+      containers:
+        - name: config-api
+          image: docker.io/changyuan/funpilot/config-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8082
+              protocol: TCP
+          env:
+            - name: FUNPILOT_API_HOST
+              value: "0.0.0.0"
+            - name: FUNPILOT_API_PORT
+              value: "8082"
+            - name: FUNPILOT_REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-address
+            - name: FUNPILOT_REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-db
+            - name: FUNPILOT_REDIS_KEY_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-key-prefix
+            - name: AGENT_SERVICE_URL
+              value: "http://funpilot-agent-service.funpilot.svc.cluster.local:8081"
+            - name: AGENT_SERVICE_TIMEOUT
+              value: "120"
+            - name: FUNPILOT_KSVC_DEFAULT_NAMESPACE
+              value: "default"
+            - name: FUNPILOT_KSVC_LIST_ALL_NAMESPACES
+              value: "false"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8082
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8082
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funpilot-config-api
+  namespace: funpilot
+  labels:
+    app: funpilot-config-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: funpilot-config-api
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+      protocol: TCP
