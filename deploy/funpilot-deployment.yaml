@@ -1,0 +1,412 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funpilot
+  namespace: funpilot
+  labels:
+    app: funpilot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: funpilot
+  template:
+    metadata:
+      labels:
+        app: funpilot
+    spec:
+      serviceAccountName: funpilot-sa
+
+      initContainers:
+        - name: wait-for-redis
+          image: redis:7.2.5
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - >-
+              until redis-cli -h funpilot-redis -p 6379 ping | grep -q PONG; do
+                echo "waiting for redis";
+                sleep 2;
+              done
+
+      containers:
+        - name: funpilot
+          image: docker.io/changyuan/funpilot/funpilot:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: log-level
+            - name: GRAFANA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: grafana-url
+            - name: GRAFANA_DATASOURCE_UID
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: grafana-datasource-uid
+            - name: GRAFANA_CONTACT_POINT_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: grafana-contact-point-name
+            - name: DEFAULT_ALERT_REPEAT_INTERVAL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: default-alert-repeat-interval-seconds
+            - name: DEFAULT_AGENT_CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: default-agent-config
+            - name: CONFIG_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: config-api-url
+            - name: CONFIG_API_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: config-api-timeout
+            - name: METRICS_TIME_WINDOW_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: metrics-time-window-seconds
+            - name: METRICS_MIN_STEP_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: metrics-step-seconds
+            - name: LLM_WORKER_COUNT
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: llm-worker-count
+            - name: LLM_QUEUE_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: llm-queue-size
+            - name: AGENT_COOLDOWN_PERIOD_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-cooldown-period-seconds
+            - name: AGENT_BLACKOUT_PERIOD_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-blackout-period-seconds
+            - name: AGENT_EXECUTION_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-execution-timeout-seconds
+            - name: AGENT_SIDECAR_URL
+              value: http://127.0.0.1:8081
+            - name: AGENT_SIDECAR_TIMEOUT
+              value: "60s"
+            - name: AGENT_MAX_ITERS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-max-iters
+            - name: FUNPILOT_REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-address
+            - name: FUNPILOT_REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-db
+            - name: FUNPILOT_REDIS_KEY_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-key-prefix
+            - name: ALERT_HISTORY_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: alert-history-ttl-seconds
+            - name: ALERT_HISTORY_MAX_LENGTH
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: alert-history-max-length
+
+            # Secrets
+            - name: GRAFANA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: funpilot-secrets
+                  key: grafana-api-key
+
+        - name: agent
+          image: docker.io/changyuan/funpilot/agent:latest
+          imagePullPolicy: Always
+          ports:
+            - name: agent-http
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: AGENT_HOST
+              value: "0.0.0.0"
+            - name: AGENT_PORT
+              value: "8081"
+            - name: AGENT_MAX_ITERS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-max-iters
+            - name: AGENT_METRICS_WINDOW_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: metrics-time-window-seconds
+            - name: AGENT_METRICS_RESOLUTION_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: metrics-step-seconds
+            - name: AGENT_REQUEST_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: agent-request-timeout-seconds
+            - name: FUNPILOT_REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-address
+            - name: FUNPILOT_REDIS_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-db
+            - name: FUNPILOT_REDIS_KEY_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-key-prefix
+            - name: DEFAULT_AGENT_CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: default-agent-config
+            - name: CONFIG_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: config-api-url
+            - name: CONFIG_API_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: config-api-timeout
+            - name: LLM_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: llm-base-url
+            - name: LLM_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: llm-model
+            - name: LLM_TEMPERATURE
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: llm-temperature
+            - name: THANOS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: thanos-url
+
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: funpilot-secrets
+                  key: llm-api-key
+            - name: LLM_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: funpilot-secrets
+                  key: llm-auth-token
+            - name: LLM_AUTH_HEADER
+              valueFrom:
+                secretKeyRef:
+                  name: funpilot-secrets
+                  key: llm-auth-header
+
+
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funpilot-webhook
+  namespace: funpilot
+  labels:
+    app: funpilot
+spec:
+  type: ClusterIP
+  selector:
+    app: funpilot
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funpilot-agent-service
+  namespace: funpilot
+  labels:
+    app: funpilot
+spec:
+  type: LoadBalancer
+  selector:
+    app: funpilot
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funpilot-redis
+  namespace: funpilot
+  labels:
+    app: funpilot-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: funpilot-redis
+  template:
+    metadata:
+      labels:
+        app: funpilot-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+              name: redis
+          args:
+            - "--appendonly"
+            - "yes"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funpilot-redis
+  namespace: funpilot
+  labels:
+    app: funpilot-redis
+spec:
+  type: LoadBalancer
+  selector:
+    app: funpilot-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+
+---
+# RedisInsight is optional, but provides a nice UI for inspecting FunPilot internal data.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funpilot-redisinsight
+  namespace: funpilot
+  labels:
+    app: funpilot-redisinsight
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: funpilot-redisinsight
+  template:
+    metadata:
+      labels:
+        app: funpilot-redisinsight
+    spec:
+      containers:
+        - name: redisinsight
+          image: redis/redisinsight:2.70
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5540
+          env:
+            - name: RI_REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-host
+            - name: RI_REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: funpilot-config
+                  key: redis-port
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funpilot-redisinsight
+  namespace: funpilot
+  labels:
+    app: funpilot-redisinsight
+spec:
+  type: LoadBalancer
+  selector:
+    app: funpilot-redisinsight
+  ports:
+    - name: http
+      port: 5540
+      targetPort: 5540
+      protocol: TCP
