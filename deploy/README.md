@@ -11,6 +11,7 @@ The following infrastructure, middleware, and observability components are requi
     * Both ambient and sidecar modes are supported
     * Istio Ingress Gateway
     * Istio Wasm Plugin recommended but not required
+* Cluster load balancer or MetalLB for exposing the API endpoint (recommend but not required)
 
 We did not test FunPilot on earlier versions of Kubernetes and Knative, but it may work on slightly older versions as well.
 
