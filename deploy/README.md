@@ -3,14 +3,15 @@
 We provide ready-to-use FunPilot images and Kubernetes manifests to make it easy for you to deploy FunPilot in your cluster. You can use the following instructions to deploy FunPilot to your Kubernetes cluster. This will set up the necessary RBAC permissions, secrets, database, and FunPilot.
 
 ## Prerequisites
-The following infrastructure, middleware, and observability components are required to before deploying FunPilot
+The following infrastructure, middleware, and observability components are required before deploying FunPilot
 * Kubernetes >= 1.31
 * Knative >= 1.19
-* Grafana Stack >= 12.1
+* Grafana Stack (Prometheus, Grafana, and Alertmanager) >= 12.1
 * Istio >= 1.27
     * Both ambient and sidecar modes are supported
     * Istio Ingress Gateway
     * Istio [Wasm Plugin](./wasm-plugin) recommended but not required
+* Thanos (recommended but not required)
 * Cluster load balancer or MetalLB for exposing the API endpoint (recommended but not required)
 
 We did not test FunPilot on earlier versions of Kubernetes and Knative, but it may work on slightly older versions as well.
