@@ -33,7 +33,7 @@ spec:
 
       containers:
         - name: config-api
-          image: docker.io/changyuan/funpilot/config-api:latest
+          image: docker.io/changyuan/funpilot-config-api:latest
           imagePullPolicy: Always
           ports:
             - name: http
