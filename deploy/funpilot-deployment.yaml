@@ -33,7 +33,7 @@ spec:
 
       containers:
         - name: funpilot
-          image: docker.io/changyuan/funpilot/funpilot:latest
+          image: docker.io/changyuan/funpilot:latest
           imagePullPolicy: Always
           ports:
             - name: http
@@ -158,7 +158,7 @@ spec:
                   key: grafana-api-key
 
         - name: agent
-          image: docker.io/changyuan/funpilot/agent:latest
+          image: docker.io/changyuan/agent:latest
           imagePullPolicy: Always
           ports:
             - name: agent-http
