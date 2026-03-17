@@ -158,7 +158,7 @@ spec:
                   key: grafana-api-key
 
         - name: agent
-          image: docker.io/changyuan/agent:latest
+          image: docker.io/changyuan/funpilot-agent:latest
           imagePullPolicy: Always
           ports:
             - name: agent-http
