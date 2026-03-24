@@ -40,3 +40,6 @@ Once all pods are in the `Running` state, FunPilot should be successfully deploy
 ```Bash
 kubectl logs -n funpilot -l app=funpilot
 ```
+
+Notes: Please make sure to adjust the configuration in `funpilot-config.yaml` and `funpilot-secrets.yaml` according to your cluster setup. For example, you may need to update the observability configuration to point to your Grafana Stack instances, the API configuration to set the correct host and port for the FunPilot webhook endpoint (contact point), and the token configuration to set the correct service account and LLM provider credentials.
+FunPilot exposes a webhook endpoint that Alertmanager can call when an alert is triggered/resolved. You will need to configure Alertmanager to send alerts to this endpoint. The default contact point is `http://funpilot-webhook.funpilot.svc.cluster.local:8080/webhook`, which is the internal service address for the FunPilot webhook.
